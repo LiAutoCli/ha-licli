@@ -1,0 +1,11 @@
+{
+  "domain": "licli",
+  "name": "LiAuto CLI",
+  "codeowners": ["@licli"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/licli/licli",
+  "iot_class": "cloud_polling",
+  "requirements": ["aiohttp>=3.9"],
+  "version": "0.1.0"
+}

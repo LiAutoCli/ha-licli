@@ -1,0 +1,21 @@
+{
+  "title": "LiAuto CLI",
+  "config": {
+    "step": {
+      "user": {
+        "title": "LiAuto CLI 配置",
+        "description": "选择连接模式并输入配置信息",
+        "data": {
+          "mode": "连接模式",
+          "host": "HTTP 地址",
+          "token": "HTTP Token",
+          "activation_code": "激活码"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接到 licli 服务",
+      "no_vehicles": "未找到车辆，请确认账号已绑定车辆"
+    }
+  }
+}

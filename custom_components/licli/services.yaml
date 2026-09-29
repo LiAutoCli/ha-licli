@@ -1,0 +1,35 @@
+control:
+  name: 车辆控制
+  description: 发送控制指令到车辆
+  fields:
+    vin:
+      name: VIN
+      description: 车辆识别码
+      required: true
+      selector:
+        text:
+    action:
+      name: 动作
+      description: 控制动作
+      required: true
+      selector:
+        select:
+          options:
+            - lock
+            - unlock
+            - find
+            - wake
+            - ac_on
+            - ac_off
+            - ac_auto
+            - ac_temp
+            - ac_fast_cool
+            - ac_fast_heat
+    temp:
+      name: 温度
+      description: 空调温度（仅 ac_temp 有效）
+      selector:
+        number:
+          min: 16
+          max: 32
+          step: 0.5
