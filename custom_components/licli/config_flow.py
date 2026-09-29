@@ -189,6 +189,7 @@ class LicliConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id=STEP_LOCAL_AUTH,
+            data_schema=vol.Schema({vol.Optional("confirm", default=True): bool}),
             description_placeholders={"auth_url": auth_url},
         )
 
