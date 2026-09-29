@@ -15,28 +15,29 @@
         "description": "Укажите адрес работающего экземпляра `licli serve`.",
         "data": {
           "host": "Адрес сервера",
-          "token": "Bearer токен"
+          "token": "Токен доступа (необязательно)"
         }
       },
-      "local_reuse": {
-        "title": "Локальный CLI",
-        "description": "Использовать существующие учетные данные в .storage/licli или повторно авторизоваться.",
-        "data": {
-          "choice": "Действие"
-        }
-      },
-      "local_activate": {
+      "local": {
         "title": "Код активации",
-        "description": "Введите код активации licli.",
+        "description": "licli требует код активации (LICLI_CODE) для статуса и управления автомобилем.",
         "data": {
           "activation_code": "Код активации"
         }
       },
-      "local_auth": {
+      "local_action": {
+        "title": "Локальный CLI",
+        "description": "Использовать существующие учетные данные в .storage/licli или повторно авторизоваться.",
+        "menu_options": {
+          "local_reuse": "Использовать существующую конфигурацию",
+          "local_reauth": "Повторная авторизация"
+        }
+      },
+      "local_reauth": {
         "title": "Авторизация",
-        "description": "Откройте следующий URL и войдите с учетной записью Li Auto:\n\n{auth_url}\n\nЗатем продолжите.",
+        "description": "Откройте следующий URL и войдите с учетной записью Li Auto:\n\n{auth_url}\n\nЗатем нажмите «Отправить», чтобы продолжить.",
         "data": {
-          "continue": "Продолжить"
+          "confirm": "Я вошёл"
         }
       },
       "local_token": {
@@ -48,11 +49,12 @@
       }
     },
     "error": {
+      "code_required": "Требуется код активации",
+      "invalid_code": "Недействительный код активации",
       "cannot_connect": "Не удалось подключиться к серверу licli",
       "no_vehicles": "Транспортные средства не найдены",
       "cannot_reuse": "Не удалось использовать существующую конфигурацию",
       "no_vehicles_reuse": "Нет ТС с существующей конфигурацией",
-      "activate_failed": "Активация не удалась",
       "login_start_failed": "Не удалось начать вход",
       "token_invalid": "Недействительный токен"
     }

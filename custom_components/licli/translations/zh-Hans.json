@@ -15,28 +15,29 @@
         "description": "指向正在运行的 `licli serve` 实例。",
         "data": {
           "host": "服务器地址",
-          "token": "Bearer Token"
+          "token": "访问令牌（可选）"
         }
       },
-      "local_reuse": {
-        "title": "本地 CLI",
-        "description": "使用 .storage/licli 中的现有凭据，或重新授权。",
-        "data": {
-          "choice": "操作"
-        }
-      },
-      "local_activate": {
+      "local": {
         "title": "激活码",
-        "description": "输入 licli 激活码。",
+        "description": "licli 查询车辆状态和控制需要激活码（LICLI_CODE）。",
         "data": {
           "activation_code": "激活码"
         }
       },
-      "local_auth": {
+      "local_action": {
+        "title": "本地 CLI",
+        "description": "使用 .storage/licli 中的现有凭据，或重新授权。",
+        "menu_options": {
+          "local_reuse": "复用已有配置",
+          "local_reauth": "重新授权"
+        }
+      },
+      "local_reauth": {
         "title": "授权",
-        "description": "打开以下 URL 并使用理想汽车账号登录：\n\n{auth_url}\n\n然后继续。",
+        "description": "打开以下 URL 并使用理想汽车账号登录：\n\n{auth_url}\n\n然后点击提交继续。",
         "data": {
-          "continue": "继续"
+          "confirm": "我已登录"
         }
       },
       "local_token": {
@@ -48,11 +49,12 @@
       }
     },
     "error": {
+      "code_required": "请填写激活码",
+      "invalid_code": "激活码无效",
       "cannot_connect": "无法连接到 licli 服务器",
       "no_vehicles": "未找到车辆",
       "cannot_reuse": "无法复用现有配置",
       "no_vehicles_reuse": "现有配置下未找到车辆",
-      "activate_failed": "激活失败",
       "login_start_failed": "无法启动登录",
       "token_invalid": "Token 无效"
     }

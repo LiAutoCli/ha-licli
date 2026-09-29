@@ -15,28 +15,29 @@
         "description": "Point to a running `licli serve` instance.",
         "data": {
           "host": "Server address",
-          "token": "Bearer token"
+          "token": "Access token (optional)"
         }
       },
-      "local_reuse": {
-        "title": "Local CLI",
-        "description": "Use existing credentials in .storage/licli or re-authorize.",
-        "data": {
-          "choice": "Action"
-        }
-      },
-      "local_activate": {
+      "local": {
         "title": "Activation code",
-        "description": "Enter the licli activation code.",
+        "description": "licli requires an activation code (LICLI_CODE) for vehicle status and control.",
         "data": {
           "activation_code": "Activation code"
         }
       },
-      "local_auth": {
+      "local_action": {
+        "title": "Local CLI",
+        "description": "Reuse existing credentials in .storage/licli, or re-authorize.",
+        "menu_options": {
+          "local_reuse": "Reuse existing config",
+          "local_reauth": "Re-authorize"
+        }
+      },
+      "local_reauth": {
         "title": "Authorize",
-        "description": "Open the following URL and log in with your Li Auto account:\n\n{auth_url}\n\nThen continue.",
+        "description": "Open the following URL and log in with your Li Auto account:\n\n{auth_url}\n\nThen press Submit to continue.",
         "data": {
-          "continue": "Continue"
+          "confirm": "I have logged in"
         }
       },
       "local_token": {
@@ -48,11 +49,12 @@
       }
     },
     "error": {
+      "code_required": "Activation code is required",
+      "invalid_code": "Invalid activation code",
       "cannot_connect": "Cannot connect to the licli server",
       "no_vehicles": "No vehicles found",
       "cannot_reuse": "Could not reuse existing config",
       "no_vehicles_reuse": "No vehicles with existing config",
-      "activate_failed": "Activation failed",
       "login_start_failed": "Failed to start login",
       "token_invalid": "Invalid token"
     }

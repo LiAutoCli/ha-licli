@@ -8,7 +8,6 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
 from .const import (
@@ -21,15 +20,16 @@ from .const import (
     MODE_LOCAL,
     DEFAULT_HTTP_PORT,
 )
-from .client import LicliClient, LicliLoginSession, async_activate, LicliError
+from .client import LicliClient, LicliLoginSession, LicliError
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_MODE = "mode"
 STEP_HTTP = "http"
+STEP_LOCAL = "local"
+STEP_LOCAL_ACTION = "local_action"
 STEP_LOCAL_REUSE = "local_reuse"
-STEP_LOCAL_AUTH = "local_auth"
-STEP_LOCAL_ACTIVATE = "local_activate"
+STEP_LOCAL_REAUTH = "local_reauth"
 STEP_LOCAL_TOKEN = "local_token"
 
 
@@ -45,27 +45,29 @@ class LicliConfigFlow(ConfigFlow, domain=DOMAIN):
         self._token: str = ""
         self._code: str = ""
         self._login_session: LicliLoginSession | None = None
+        self._auth_url: str | None = None
+        self._reuse_error: str | None = None
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Entry point: redirect to mode selection."""
+        return await self.async_step_mode()
 
     async def async_step_mode(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Choose connection mode."""
+        """Choose connection mode (menu)."""
         if user_input is not None:
             self._mode = user_input[CONF_MODE]
             if self._mode == MODE_HTTP:
                 return await self.async_step_http()
-            return await self.async_step_local_reuse()
+            return await self.async_step_local()
 
         return self.async_show_menu(
             step_id=STEP_MODE,
             menu_options=[MODE_HTTP, MODE_LOCAL],
         )
-
-    async def async_step_local(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Local CLI entry: reuse or re-authorize."""
-        return await self.async_step_local_reuse(user_input)
 
     async def async_step_http(
         self, user_input: dict[str, Any] | None = None
@@ -92,7 +94,7 @@ class LicliConfigFlow(ConfigFlow, domain=DOMAIN):
                             CONF_TOKEN: self._token,
                         },
                     )
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001
                 _LOGGER.error("HTTP validation failed: %s", err)
                 errors["base"] = "cannot_connect"
 
@@ -107,123 +109,111 @@ class LicliConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_local_reuse(
+    async def async_step_local(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Local mode: reuse existing config or re-auth."""
-        if user_input is not None:
-            choice = user_input.get("choice", "reuse")
-            if choice == "reuse":
-                # Try to list vehicles with existing credentials
-                try:
-                    client = LicliClient(
-                        self.hass,
-                        {CONF_MODE: MODE_LOCAL, CONF_ACTIVATION_CODE: ""},
-                    )
-                    vehicles = await client.vehicles()
-                    if vehicles:
-                        return self.async_create_entry(
-                            title="LiAuto CLI (local)",
-                            data={CONF_MODE: MODE_LOCAL, CONF_ACTIVATION_CODE: ""},
-                        )
-                    return self.async_show_form(
-                        step_id=STEP_LOCAL_REUSE,
-                        errors={"base": "no_vehicles_reuse"},
-                    )
-                except Exception as err:
-                    _LOGGER.error("Reuse check failed: %s", err)
-                    return self.async_show_form(
-                        step_id=STEP_LOCAL_REUSE,
-                        errors={"base": "cannot_reuse"},
-                    )
-            return await self.async_step_local_activate()
-
-        return self.async_show_form(
-            step_id=STEP_LOCAL_REUSE,
-            data_schema=vol.Schema(
-                {
-                    vol.Required("choice", default="reuse"): vol.In(
-                        {"reuse": "Reuse existing config", "reauth": "Re-authorize"}
-                    ),
-                }
-            ),
-        )
-
-    async def async_step_local_activate(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Local mode: enter activation code."""
+        """Local mode: collect the activation code (required for status/control)."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            self._code = user_input.get(CONF_ACTIVATION_CODE, "")
-            try:
-                await async_activate(self.hass, self._code)
-                return await self.async_step_local_auth()
-            except Exception as err:
-                _LOGGER.error("Activation failed: %s", err)
-                errors["base"] = "activate_failed"
+            code = (user_input.get(CONF_ACTIVATION_CODE) or "").strip()
+            if not code:
+                errors["base"] = "code_required"
+            else:
+                self._code = code
+                return await self.async_step_local_action()
+
+        if self._reuse_error:
+            errors["base"] = self._reuse_error
+            self._reuse_error = None
 
         return self.async_show_form(
-            step_id=STEP_LOCAL_ACTIVATE,
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_ACTIVATION_CODE): str,
-                }
-            ),
+            step_id=STEP_LOCAL,
+            data_schema=vol.Schema({vol.Required(CONF_ACTIVATION_CODE): str}),
             errors=errors,
         )
 
-    async def async_step_local_auth(
+    async def async_step_local_action(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Local mode: start OAuth login."""
-        self._login_session = LicliLoginSession(self.hass, self._code or None)
+        """Local mode: reuse existing config or re-authorize (menu)."""
+        return self.async_show_menu(
+            step_id=STEP_LOCAL_ACTION,
+            menu_options=[STEP_LOCAL_REUSE, STEP_LOCAL_REAUTH],
+        )
+
+    async def async_step_local_reuse(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Reuse credentials already in .storage/licli, validating the code."""
         try:
-            auth_url = await self._login_session.async_start()
-        except Exception as err:
-            _LOGGER.error("Login start failed: %s", err)
-            return self.async_show_form(
-                step_id=STEP_LOCAL_AUTH,
-                errors={"base": "login_start_failed"},
+            client = LicliClient(
+                self.hass,
+                {CONF_MODE: MODE_LOCAL, CONF_ACTIVATION_CODE: self._code},
             )
+            vehicles = await client.vehicles()
+            if not vehicles:
+                self._reuse_error = "no_vehicles_reuse"
+            else:
+                # `status` requires a valid activation code -> validates it too.
+                await client.status(vehicles[0]["vin"])
+                return self.async_create_entry(
+                    title="LiAuto CLI (local)",
+                    data={CONF_MODE: MODE_LOCAL, CONF_ACTIVATION_CODE: self._code},
+                )
+        except LicliError as err:
+            _LOGGER.error("Reuse validation failed: %s", err)
+            self._reuse_error = (
+                "invalid_code" if "licen" in str(err).lower() else "cannot_reuse"
+            )
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.error("Reuse validation failed: %s", err)
+            self._reuse_error = "cannot_reuse"
+
+        return await self.async_step_local()
+
+    async def async_step_local_reauth(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Re-authorize: start OAuth login and show the authorization URL."""
+        if user_input is not None:
+            return await self.async_step_local_token()
+
+        if self._login_session is None:
+            self._login_session = LicliLoginSession(self.hass, self._code or None)
+            try:
+                self._auth_url = await self._login_session.async_start()
+            except Exception as err:  # noqa: BLE001
+                _LOGGER.error("Login start failed: %s", err)
+                self._login_session = None
+                self._reuse_error = "login_start_failed"
+                return await self.async_step_local()
 
         return self.async_show_form(
-            step_id=STEP_LOCAL_AUTH,
+            step_id=STEP_LOCAL_REAUTH,
             data_schema=vol.Schema({vol.Optional("confirm", default=True): bool}),
-            description_placeholders={"auth_url": auth_url},
+            description_placeholders={"auth_url": self._auth_url or ""},
         )
 
     async def async_step_local_token(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Local mode: paste token JSON."""
+        """Local mode: paste the token JSON returned after login."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            token_json = user_input.get("token_json", "")
             try:
                 if self._login_session is None:
                     raise LicliError("session expired")
-                await self._login_session.async_submit(token_json)
+                await self._login_session.async_submit(user_input.get("token_json", ""))
                 return self.async_create_entry(
                     title="LiAuto CLI (local)",
                     data={CONF_MODE: MODE_LOCAL, CONF_ACTIVATION_CODE: self._code},
                 )
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001
                 _LOGGER.error("Token submit failed: %s", err)
                 errors["base"] = "token_invalid"
 
         return self.async_show_form(
             step_id=STEP_LOCAL_TOKEN,
-            data_schema=vol.Schema(
-                {
-                    vol.Required("token_json"): str,
-                }
-            ),
+            data_schema=vol.Schema({vol.Required("token_json"): str}),
             errors=errors,
         )
-
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Entry point: redirect to mode selection."""
-        return await self.async_step_mode()
