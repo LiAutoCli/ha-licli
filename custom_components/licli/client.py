@@ -6,8 +6,7 @@ import asyncio
 import json
 import logging
 import os
-import shutil
-import subprocess
+import sys
 from typing import Any
 
 import aiohttp
@@ -53,13 +52,7 @@ class LicliClient:
                 return data
 
     async def _cli_request(self, args: list[str]) -> dict[str, Any]:
-        """Run licli CLI via subprocess."""
-        licli = shutil.which("licli") or shutil.which("liauto")
-        if not licli:
-            raise LicliError("licli binary not found")
-
-        cmd = [licli] + args + ["--json"]
-
+        """Run liauto CLI via `python -m liauto` (installed as HA requirement)."""
         # Non-serve mode: keep licli credentials/config inside HA's .storage/licli.
         # licli follows XDG, so XDG_CONFIG_HOME=<config_dir>/.storage puts
         # device.json/auth.json under <config_dir>/.storage/licli/.
@@ -71,12 +64,17 @@ class LicliClient:
         if self._code:
             env["LICLI_CODE"] = self._code
 
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=env,
-        )
+        cmd = [sys.executable, "-m", "liauto"] + args + ["--json"]
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=env,
+            )
+        except OSError as err:
+            raise LicliError(f"failed to start liauto: {err}") from err
+
         stdout, stderr = await proc.communicate()
 
         if proc.returncode != 0:
