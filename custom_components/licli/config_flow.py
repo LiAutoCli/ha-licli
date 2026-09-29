@@ -58,12 +58,14 @@ class LicliConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_menu(
             step_id=STEP_MODE,
-            menu_options=[
-                {"id": MODE_HTTP, "label": "HTTP (licli serve)"},
-                {"id": MODE_LOCAL, "label": "Local CLI (liauto)"},
-            ],
-            description_placeholders={},
+            menu_options=[MODE_HTTP, MODE_LOCAL],
         )
+
+    async def async_step_local(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Local CLI entry: reuse or re-authorize."""
+        return await self.async_step_local_reuse(user_input)
 
     async def async_step_http(
         self, user_input: dict[str, Any] | None = None
