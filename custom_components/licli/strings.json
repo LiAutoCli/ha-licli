@@ -15,7 +15,7 @@
         "description": "Point to a running `licli serve` instance.",
         "data": {
           "host": "Server address",
-          "token": "Access token (optional)"
+          "token": "***)"
         }
       },
       "local": {
@@ -46,6 +46,21 @@
         "data": {
           "token_json": "Token JSON"
         }
+      },
+      "reconfigure_local": {
+        "title": "Reconfigure: activation code",
+        "description": "Update the activation code. It is validated against the existing credentials.",
+        "data": {
+          "activation_code": "Activation code"
+        }
+      },
+      "reconfigure_http": {
+        "title": "Reconfigure: HTTP server",
+        "description": "Update the HTTP server address and token.",
+        "data": {
+          "host": "Server address",
+          "token": "***)"
+        }
       }
     },
     "error": {
@@ -57,6 +72,9 @@
       "no_vehicles_reuse": "No vehicles with existing config",
       "login_start_failed": "Failed to start login",
       "token_invalid": "Invalid token"
+    },
+    "abort": {
+      "reconfigure_successful": "Reconfiguration successful"
     }
   }
 }

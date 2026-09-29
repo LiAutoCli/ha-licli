@@ -15,7 +15,7 @@
         "description": "指向正在运行的 `licli serve` 实例。",
         "data": {
           "host": "服务器地址",
-          "token": "访问令牌（可选）"
+          "token": "***"
         }
       },
       "local": {
@@ -46,6 +46,21 @@
         "data": {
           "token_json": "Token JSON"
         }
+      },
+      "reconfigure_local": {
+        "title": "重新配置：激活码",
+        "description": "更新激活码，会基于现有凭据进行校验。",
+        "data": {
+          "activation_code": "激活码"
+        }
+      },
+      "reconfigure_http": {
+        "title": "重新配置：HTTP 服务器",
+        "description": "更新 HTTP 服务器地址和 Token。",
+        "data": {
+          "host": "服务器地址",
+          "token": "***"
+        }
       }
     },
     "error": {
@@ -57,6 +72,9 @@
       "no_vehicles_reuse": "现有配置下未找到车辆",
       "login_start_failed": "无法启动登录",
       "token_invalid": "Token 无效"
+    },
+    "abort": {
+      "reconfigure_successful": "重新配置成功"
     }
   }
 }
