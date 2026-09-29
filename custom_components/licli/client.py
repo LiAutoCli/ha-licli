@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import shutil
 import subprocess
 from typing import Any
@@ -58,7 +59,15 @@ class LicliClient:
             raise LicliError("licli binary not found")
 
         cmd = [licli] + args + ["--json"]
-        env = {}
+
+        # Non-serve mode: keep licli credentials/config inside HA's .storage/licli.
+        # licli follows XDG, so XDG_CONFIG_HOME=<config_dir>/.storage puts
+        # device.json/auth.json under <config_dir>/.storage/licli/.
+        config_dir = self._hass.config.config_dir
+        xdg_config_home = os.path.join(config_dir, ".storage")
+
+        env = os.environ.copy()
+        env["XDG_CONFIG_HOME"] = xdg_config_home
         if self._code:
             env["LICLI_CODE"] = self._code
 
