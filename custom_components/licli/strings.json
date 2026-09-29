@@ -2,20 +2,59 @@
   "title": "LiAuto CLI",
   "config": {
     "step": {
-      "user": {
-        "title": "LiAuto CLI 配置",
-        "description": "选择连接模式并输入配置信息",
+      "mode": {
+        "title": "Connection mode",
+        "description": "How should Home Assistant talk to licli?",
+        "menu_options": {
+          "http": "HTTP (licli serve)",
+          "local": "Local CLI (liauto)"
+        }
+      },
+      "http": {
+        "title": "HTTP server",
+        "description": "Point to a running `licli serve` instance.",
         "data": {
-          "mode": "连接模式",
-          "host": "HTTP 地址",
-          "token": "HTTP Token",
-          "activation_code": "激活码"
+          "host": "Server address",
+          "token": "Bearer token"
+        }
+      },
+      "local_reuse": {
+        "title": "Local CLI",
+        "description": "Use existing credentials in .storage/licli or re-authorize.",
+        "data": {
+          "choice": "Action"
+        }
+      },
+      "local_activate": {
+        "title": "Activation code",
+        "description": "Enter the licli activation code.",
+        "data": {
+          "activation_code": "Activation code"
+        }
+      },
+      "local_auth": {
+        "title": "Authorize",
+        "description": "Open the following URL and log in with your Li Auto account:\n\n{auth_url}\n\nThen continue.",
+        "data": {
+          "continue": "Continue"
+        }
+      },
+      "local_token": {
+        "title": "Token",
+        "description": "Paste the token JSON returned after login.",
+        "data": {
+          "token_json": "Token JSON"
         }
       }
     },
     "error": {
-      "cannot_connect": "无法连接到 licli 服务",
-      "no_vehicles": "未找到车辆，请确认账号已绑定车辆"
+      "cannot_connect": "Cannot connect to the licli server",
+      "no_vehicles": "No vehicles found",
+      "cannot_reuse": "Could not reuse existing config",
+      "no_vehicles_reuse": "No vehicles with existing config",
+      "activate_failed": "Activation failed",
+      "login_start_failed": "Failed to start login",
+      "token_invalid": "Invalid token"
     }
   }
 }

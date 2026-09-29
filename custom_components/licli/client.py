@@ -28,6 +28,16 @@ class LicliClient:
         self._host = config.get(CONF_HOST, f"http://127.0.0.1:18001")
         self._token = config.get(CONF_TOKEN)
         self._code = config.get(CONF_ACTIVATION_CODE)
+        self._login_proc: asyncio.subprocess.Process | None = None
+
+    def _base_env(self) -> dict[str, str]:
+        """Build subprocess env: licli config lives in HA's .storage/licli."""
+        config_dir = self._hass.config.config_dir
+        env = os.environ.copy()
+        env["XDG_CONFIG_HOME"] = os.path.join(config_dir, ".storage")
+        if self._code:
+            env["LICLI_CODE"] = self._code
+        return env
 
     async def _http_request(
         self,
@@ -53,24 +63,13 @@ class LicliClient:
 
     async def _cli_request(self, args: list[str]) -> dict[str, Any]:
         """Run liauto CLI via `python -m liauto` (installed as HA requirement)."""
-        # Non-serve mode: keep licli credentials/config inside HA's .storage/licli.
-        # licli follows XDG, so XDG_CONFIG_HOME=<config_dir>/.storage puts
-        # device.json/auth.json under <config_dir>/.storage/licli/.
-        config_dir = self._hass.config.config_dir
-        xdg_config_home = os.path.join(config_dir, ".storage")
-
-        env = os.environ.copy()
-        env["XDG_CONFIG_HOME"] = xdg_config_home
-        if self._code:
-            env["LICLI_CODE"] = self._code
-
         cmd = [sys.executable, "-m", "liauto"] + args + ["--json"]
         try:
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=env,
+                env=self._base_env(),
             )
         except OSError as err:
             raise LicliError(f"failed to start liauto: {err}") from err
@@ -149,3 +148,54 @@ class LicliClient:
 
 class LicliError(Exception):
     """LiAuto CLI error."""
+
+
+async def async_activate(hass: HomeAssistant, code: str) -> dict[str, Any]:
+    """Run `liauto activate` with the given activation code."""
+    client = LicliClient(hass, {CONF_MODE: MODE_LOCAL, CONF_ACTIVATION_CODE: code})
+    return await client._cli_request(["activate"])
+
+
+class LicliLoginSession:
+    """Interactive `liauto login` session kept alive across config-flow steps."""
+
+    def __init__(self, hass: HomeAssistant, code: str | None) -> None:
+        self._hass = hass
+        self._code = code or None
+        self._proc: asyncio.subprocess.Process | None = None
+
+    async def async_start(self) -> str:
+        """Start login and return the OAuth authorization URL."""
+        client = LicliClient(self._hass, {CONF_MODE: MODE_LOCAL, CONF_ACTIVATION_CODE: self._code})
+        self._proc = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "liauto",
+            "login",
+            "--json",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=client._base_env(),
+        )
+        line = await self._proc.stdout.readline()
+        payload = json.loads(line.decode().strip() or "{}")
+        url = payload.get("auth_url")
+        if not url:
+            raise LicliError(payload.get("error", {}).get("message", "no auth_url"))
+        return url
+
+    async def async_submit(self, token_json: str) -> dict[str, Any]:
+        """Feed the pasted token JSON to the login process and finish."""
+        if self._proc is None or self._proc.stdin is None:
+            raise LicliError("login session not started")
+        self._proc.stdin.write((token_json.strip() + "\n").encode())
+        await self._proc.stdin.drain()
+        stdout, stderr = await self._proc.communicate()
+        lines = [ln for ln in stdout.decode().strip().splitlines() if ln.strip()]
+        if not lines:
+            raise LicliError(stderr.decode().strip() or "login failed")
+        payload = json.loads(lines[-1])
+        if not payload.get("ok"):
+            raise LicliError(payload.get("error", {}).get("message", "login failed"))
+        return payload

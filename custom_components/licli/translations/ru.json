@@ -1,0 +1,60 @@
+{
+  "title": "LiAuto CLI",
+  "config": {
+    "step": {
+      "mode": {
+        "title": "Режим подключения",
+        "description": "Как Home Assistant должен взаимодействовать с licli?",
+        "menu_options": {
+          "http": "HTTP (licli serve)",
+          "local": "Локальный CLI (liauto)"
+        }
+      },
+      "http": {
+        "title": "HTTP-сервер",
+        "description": "Укажите адрес работающего экземпляра `licli serve`.",
+        "data": {
+          "host": "Адрес сервера",
+          "token": "Bearer токен"
+        }
+      },
+      "local_reuse": {
+        "title": "Локальный CLI",
+        "description": "Использовать существующие учетные данные в .storage/licli или повторно авторизоваться.",
+        "data": {
+          "choice": "Действие"
+        }
+      },
+      "local_activate": {
+        "title": "Код активации",
+        "description": "Введите код активации licli.",
+        "data": {
+          "activation_code": "Код активации"
+        }
+      },
+      "local_auth": {
+        "title": "Авторизация",
+        "description": "Откройте следующий URL и войдите с учетной записью Li Auto:\n\n{auth_url}\n\nЗатем продолжите.",
+        "data": {
+          "continue": "Продолжить"
+        }
+      },
+      "local_token": {
+        "title": "Токен",
+        "description": "Вставьте JSON токена, полученный после входа.",
+        "data": {
+          "token_json": "JSON токена"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Не удалось подключиться к серверу licli",
+      "no_vehicles": "Транспортные средства не найдены",
+      "cannot_reuse": "Не удалось использовать существующую конфигурацию",
+      "no_vehicles_reuse": "Нет ТС с существующей конфигурацией",
+      "activate_failed": "Активация не удалась",
+      "login_start_failed": "Не удалось начать вход",
+      "token_invalid": "Недействительный токен"
+    }
+  }
+}

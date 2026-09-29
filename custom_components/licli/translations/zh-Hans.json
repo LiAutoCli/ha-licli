@@ -1,0 +1,60 @@
+{
+  "title": "LiAuto CLI",
+  "config": {
+    "step": {
+      "mode": {
+        "title": "连接模式",
+        "description": "Home Assistant 如何连接 licli？",
+        "menu_options": {
+          "http": "HTTP (licli serve)",
+          "local": "本地 CLI (liauto)"
+        }
+      },
+      "http": {
+        "title": "HTTP 服务器",
+        "description": "指向正在运行的 `licli serve` 实例。",
+        "data": {
+          "host": "服务器地址",
+          "token": "Bearer Token"
+        }
+      },
+      "local_reuse": {
+        "title": "本地 CLI",
+        "description": "使用 .storage/licli 中的现有凭据，或重新授权。",
+        "data": {
+          "choice": "操作"
+        }
+      },
+      "local_activate": {
+        "title": "激活码",
+        "description": "输入 licli 激活码。",
+        "data": {
+          "activation_code": "激活码"
+        }
+      },
+      "local_auth": {
+        "title": "授权",
+        "description": "打开以下 URL 并使用理想汽车账号登录：\n\n{auth_url}\n\n然后继续。",
+        "data": {
+          "continue": "继续"
+        }
+      },
+      "local_token": {
+        "title": "Token",
+        "description": "粘贴登录后返回的 Token JSON。",
+        "data": {
+          "token_json": "Token JSON"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接到 licli 服务器",
+      "no_vehicles": "未找到车辆",
+      "cannot_reuse": "无法复用现有配置",
+      "no_vehicles_reuse": "现有配置下未找到车辆",
+      "activate_failed": "激活失败",
+      "login_start_failed": "无法启动登录",
+      "token_invalid": "Token 无效"
+    }
+  }
+}
