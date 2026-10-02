@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from homeassistant.components.device_tracker import (
     SourceType,
@@ -40,6 +41,9 @@ class LicliDeviceTracker(
 ):
     """Representation of a LiAuto vehicle location."""
 
+    _attr_has_entity_name = True
+    _attr_name = "位置"
+
     def __init__(
         self,
         coordinator: LicliDataUpdateCoordinator,
@@ -49,9 +53,17 @@ class LicliDeviceTracker(
         """Initialize the tracker."""
         super().__init__(coordinator)
         self._vin = vin
+        self._nickname = nickname
         self._attr_unique_id = f"{DOMAIN}_{vin}_location"
-        self._attr_name = f"{nickname} 位置"
-        self._attr_has_entity_name = True
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device info, so the tracker groups under the vehicle device."""
+        return {
+            "identifiers": {(DOMAIN, self._vin)},
+            "name": self._nickname,
+            "manufacturer": "Li Auto",
+        }
 
     @property
     def source_type(self) -> str:
