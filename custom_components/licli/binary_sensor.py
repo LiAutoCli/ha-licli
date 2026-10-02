@@ -71,12 +71,22 @@ class LicliBinarySensor(
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._vin = vin
+        self._nickname = nickname
         self._field = field
         self._is_charging = is_charging
         self._attr_unique_id = f"{DOMAIN}_{vin}_{field}"
         self._attr_name = f"{nickname} {label}"
         self._attr_has_entity_name = True
         self._attr_device_class = device_class
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device info, so the entity groups under the vehicle device."""
+        return {
+            "identifiers": {(DOMAIN, self._vin)},
+            "name": self._nickname,
+            "manufacturer": "Li Auto",
+        }
 
     @property
     def is_on(self) -> bool | None:
@@ -110,6 +120,7 @@ class LicliDoorSensor(
         """Initialize the door sensor."""
         super().__init__(coordinator)
         self._vin = vin
+        self._nickname = nickname
         self._door = door
         door_labels = {
             "driver": "主驾门",
@@ -122,6 +133,15 @@ class LicliDoorSensor(
         self._attr_name = f"{nickname} {door_labels.get(door, door)}"
         self._attr_has_entity_name = True
         self._attr_device_class = BinarySensorDeviceClass.DOOR
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device info, so the entity groups under the vehicle device."""
+        return {
+            "identifiers": {(DOMAIN, self._vin)},
+            "name": self._nickname,
+            "manufacturer": "Li Auto",
+        }
 
     @property
     def is_on(self) -> bool | None:

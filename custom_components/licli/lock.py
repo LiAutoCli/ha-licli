@@ -45,10 +45,20 @@ class LicliLock(CoordinatorEntity[LicliDataUpdateCoordinator], LockEntity):
         """Initialize the lock."""
         super().__init__(coordinator)
         self._vin = vin
+        self._nickname = nickname
         self._attr_unique_id = f"{DOMAIN}_{vin}_lock"
         self._attr_name = f"{nickname} 门锁"
         self._attr_has_entity_name = True
         self._attr_supported_features = LockEntityFeature.OPEN
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device info, so the entity groups under the vehicle device."""
+        return {
+            "identifiers": {(DOMAIN, self._vin)},
+            "name": self._nickname,
+            "manufacturer": "Li Auto",
+        }
 
     @property
     def is_locked(self) -> bool | None:

@@ -61,9 +61,19 @@ class LicliClimate(CoordinatorEntity[LicliDataUpdateCoordinator], ClimateEntity)
         """Initialize the climate entity."""
         super().__init__(coordinator)
         self._vin = vin
+        self._nickname = nickname
         self._attr_unique_id = f"{DOMAIN}_{vin}_climate"
         self._attr_name = f"{nickname} 空调"
         self._attr_has_entity_name = True
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device info, so the entity groups under the vehicle device."""
+        return {
+            "identifiers": {(DOMAIN, self._vin)},
+            "name": self._nickname,
+            "manufacturer": "Li Auto",
+        }
 
     @property
     def hvac_mode(self) -> HVACMode | None:

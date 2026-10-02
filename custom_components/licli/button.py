@@ -50,11 +50,21 @@ class LicliButton(CoordinatorEntity[LicliDataUpdateCoordinator], ButtonEntity):
         """Initialize the button."""
         super().__init__(coordinator)
         self._vin = vin
+        self._nickname = nickname
         self._action = action
         self._open_trunk = open_trunk
         self._attr_unique_id = f"{DOMAIN}_{vin}_{action}{'_trunk_open' if open_trunk else ''}"
         self._attr_name = f"{nickname} {label}"
         self._attr_has_entity_name = True
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device info, so the entity groups under the vehicle device."""
+        return {
+            "identifiers": {(DOMAIN, self._vin)},
+            "name": self._nickname,
+            "manufacturer": "Li Auto",
+        }
 
     async def async_press(self) -> None:
         """Handle button press."""
