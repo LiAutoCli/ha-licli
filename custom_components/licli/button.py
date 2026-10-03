@@ -10,7 +10,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, COORDINATOR, ATTR_VIN
+from .const import (
+    ATTR_VIN,
+    BUTTON_SPECS,
+    COORDINATOR,
+    DOMAIN,
+    entity_id_for,
+    unique_id_for,
+)
 from .coordinator import LicliDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,13 +32,12 @@ async def async_setup_entry(
     coordinator: LicliDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         COORDINATOR
     ]
-    entities = []
+    entities: list[ButtonEntity] = []
     for vin, data in coordinator.data.items():
         vehicle = data.get("vehicle", {})
         nickname = vehicle.get("vehicleInfo", {}).get("vehicleNickname", vin)
-        entities.append(LicliButton(coordinator, vin, nickname, "find", "寻车"))
-        entities.append(LicliButton(coordinator, vin, nickname, "wake", "唤醒"))
-        entities.append(LicliButton(coordinator, vin, nickname, "trunk", "尾门开关", open_trunk=True))
+        for spec in BUTTON_SPECS:
+            entities.append(LicliButton(coordinator, vin, nickname, spec))
     async_add_entities(entities)
 
 
@@ -43,28 +49,28 @@ class LicliButton(CoordinatorEntity[LicliDataUpdateCoordinator], ButtonEntity):
         coordinator: LicliDataUpdateCoordinator,
         vin: str,
         nickname: str,
-        action: str,
-        label: str,
-        open_trunk: bool = False,
+        spec: dict[str, Any],
     ) -> None:
         """Initialize the button."""
         super().__init__(coordinator)
         self._vin = vin
-        self._nickname = nickname
-        self._action = action
-        self._open_trunk = open_trunk
-        self._attr_unique_id = f"{DOMAIN}_{vin}_{action}{'_trunk_open' if open_trunk else ''}"
-        self._attr_name = f"{nickname} {label}"
+        self._action = spec["action"]
+        self._slug = spec["slug"]
+        self._open_trunk = spec.get("open", False)
+        self.entity_id = entity_id_for("button", vin, self._slug)
+        self._attr_unique_id = unique_id_for(vin, self._slug)
+        self._attr_translation_key = self._slug
         self._attr_has_entity_name = True
-
-    @property
-    def device_info(self) -> dict[str, Any]:
-        """Return device info, so the entity groups under the vehicle device."""
-        return {
-            "identifiers": {(DOMAIN, self._vin)},
-            "name": self._nickname,
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, vin)},
+            "name": nickname,
             "manufacturer": "Li Auto",
         }
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return extra attributes."""
+        return {ATTR_VIN: self._vin}
 
     async def async_press(self) -> None:
         """Handle button press."""

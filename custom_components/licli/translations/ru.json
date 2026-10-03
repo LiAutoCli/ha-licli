@@ -1,5 +1,51 @@
 {
   "title": "LiAuto CLI",
+  "entity": {
+    "sensor": {
+      "battery": {"name": "Батарея"},
+      "batt_endurance": {"name": "Запас хода (электро)"},
+      "fuel_endurance": {"name": "Запас хода (топливо)"},
+      "endurance": {"name": "Общий запас хода"},
+      "mileage": {"name": "Одометр"},
+      "ad_mileage": {"name": "Пробег AD"},
+      "indoor_temp": {"name": "Температура в салоне"},
+      "outdoor_temp": {"name": "Температура снаружи"},
+      "air_quality": {"name": "Качество воздуха"},
+      "charging_status": {
+        "name": "Состояние зарядки",
+        "state": {
+          "charging": "Заряжается",
+          "connected": "Подключено",
+          "disconnected": "Не подключено",
+          "fault": "Ошибка",
+          "full": "Полностью заряжено",
+          "unknown": "Неизвестно"
+        }
+      }
+    },
+    "binary_sensor": {
+      "online": {"name": "Онлайн"},
+      "door_driver": {"name": "Водительская дверь"},
+      "door_passenger": {"name": "Пассажирская дверь"},
+      "door_rear_left": {"name": "Задняя левая дверь"},
+      "door_rear_right": {"name": "Задняя правая дверь"},
+      "door_trunk": {"name": "Багажник"}
+    },
+    "lock": {
+      "door": {"name": "Дверной замок"}
+    },
+    "climate": {
+      "ac": {"name": "Климат-контроль"}
+    },
+    "device_tracker": {
+      "location": {"name": "Местоположение"}
+    },
+    "button": {
+      "find": {"name": "Найти авто"},
+      "wake": {"name": "Разбудить"},
+      "trunk": {"name": "Багажник"}
+    }
+  },
   "config": {
     "step": {
       "mode": {
@@ -15,7 +61,7 @@
         "description": "Укажите адрес работающего экземпляра `licli serve`.",
         "data": {
           "host": "Адрес сервера",
-          "token": "***)"
+          "token": "Токен"
         }
       },
       "local": {
@@ -59,7 +105,7 @@
         "description": "Обновите адрес HTTP-сервера и токен.",
         "data": {
           "host": "Адрес сервера",
-          "token": "***)"
+          "token": "Токен"
         }
       }
     },

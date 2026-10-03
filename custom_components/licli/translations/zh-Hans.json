@@ -1,5 +1,51 @@
 {
   "title": "LiAuto CLI",
+  "entity": {
+    "sensor": {
+      "battery": {"name": "电量"},
+      "batt_endurance": {"name": "纯电续航"},
+      "fuel_endurance": {"name": "燃油续航"},
+      "endurance": {"name": "总续航"},
+      "mileage": {"name": "总里程"},
+      "ad_mileage": {"name": "辅助驾驶里程"},
+      "indoor_temp": {"name": "车内温度"},
+      "outdoor_temp": {"name": "车外温度"},
+      "air_quality": {"name": "空气质量"},
+      "charging_status": {
+        "name": "充电状态",
+        "state": {
+          "charging": "充电中",
+          "connected": "已连接",
+          "disconnected": "未连接",
+          "fault": "故障",
+          "full": "已充满",
+          "unknown": "未知"
+        }
+      }
+    },
+    "binary_sensor": {
+      "online": {"name": "在线"},
+      "door_driver": {"name": "主驾车门"},
+      "door_passenger": {"name": "副驾车门"},
+      "door_rear_left": {"name": "左后车门"},
+      "door_rear_right": {"name": "右后车门"},
+      "door_trunk": {"name": "尾门"}
+    },
+    "lock": {
+      "door": {"name": "门锁"}
+    },
+    "climate": {
+      "ac": {"name": "空调"}
+    },
+    "device_tracker": {
+      "location": {"name": "位置"}
+    },
+    "button": {
+      "find": {"name": "寻车"},
+      "wake": {"name": "唤醒"},
+      "trunk": {"name": "尾门"}
+    }
+  },
   "config": {
     "step": {
       "mode": {
@@ -15,7 +61,7 @@
         "description": "指向正在运行的 `licli serve` 实例。",
         "data": {
           "host": "服务器地址",
-          "token": "***"
+          "token": "令牌"
         }
       },
       "local": {
@@ -59,7 +105,7 @@
         "description": "更新 HTTP 服务器地址和 Token。",
         "data": {
           "host": "服务器地址",
-          "token": "***"
+          "token": "令牌"
         }
       }
     },

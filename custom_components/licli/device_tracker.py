@@ -13,7 +13,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, COORDINATOR, ATTR_VIN
+from .const import (
+    ATTR_VIN,
+    COORDINATOR,
+    DOMAIN,
+    TRACKER_SLUG,
+    entity_id_for,
+    unique_id_for,
+)
 from .coordinator import LicliDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,7 +35,7 @@ async def async_setup_entry(
     coordinator: LicliDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         COORDINATOR
     ]
-    entities = []
+    entities: list[TrackerEntity] = []
     for vin, data in coordinator.data.items():
         vehicle = data.get("vehicle", {})
         nickname = vehicle.get("vehicleInfo", {}).get("vehicleNickname", vin)
@@ -42,7 +49,6 @@ class LicliDeviceTracker(
     """Representation of a LiAuto vehicle location."""
 
     _attr_has_entity_name = True
-    _attr_name = "位置"
 
     def __init__(
         self,
@@ -53,15 +59,12 @@ class LicliDeviceTracker(
         """Initialize the tracker."""
         super().__init__(coordinator)
         self._vin = vin
-        self._nickname = nickname
-        self._attr_unique_id = f"{DOMAIN}_{vin}_location"
-
-    @property
-    def device_info(self) -> dict[str, Any]:
-        """Return device info, so the tracker groups under the vehicle device."""
-        return {
-            "identifiers": {(DOMAIN, self._vin)},
-            "name": self._nickname,
+        self.entity_id = entity_id_for("device_tracker", vin, TRACKER_SLUG)
+        self._attr_unique_id = unique_id_for(vin, TRACKER_SLUG)
+        self._attr_translation_key = TRACKER_SLUG
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, vin)},
+            "name": nickname,
             "manufacturer": "Li Auto",
         }
 

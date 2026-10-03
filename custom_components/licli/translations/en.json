@@ -1,5 +1,51 @@
 {
   "title": "LiAuto CLI",
+  "entity": {
+    "sensor": {
+      "battery": {"name": "Battery"},
+      "batt_endurance": {"name": "Battery range"},
+      "fuel_endurance": {"name": "Fuel range"},
+      "endurance": {"name": "Total range"},
+      "mileage": {"name": "Odometer"},
+      "ad_mileage": {"name": "AD mileage"},
+      "indoor_temp": {"name": "Indoor temperature"},
+      "outdoor_temp": {"name": "Outdoor temperature"},
+      "air_quality": {"name": "Air quality"},
+      "charging_status": {
+        "name": "Charging status",
+        "state": {
+          "charging": "Charging",
+          "connected": "Connected",
+          "disconnected": "Disconnected",
+          "fault": "Fault",
+          "full": "Full",
+          "unknown": "Unknown"
+        }
+      }
+    },
+    "binary_sensor": {
+      "online": {"name": "Online"},
+      "door_driver": {"name": "Driver door"},
+      "door_passenger": {"name": "Passenger door"},
+      "door_rear_left": {"name": "Rear left door"},
+      "door_rear_right": {"name": "Rear right door"},
+      "door_trunk": {"name": "Trunk"}
+    },
+    "lock": {
+      "door": {"name": "Door lock"}
+    },
+    "climate": {
+      "ac": {"name": "Air conditioning"}
+    },
+    "device_tracker": {
+      "location": {"name": "Location"}
+    },
+    "button": {
+      "find": {"name": "Find car"},
+      "wake": {"name": "Wake up"},
+      "trunk": {"name": "Trunk"}
+    }
+  },
   "config": {
     "step": {
       "mode": {
@@ -15,7 +61,7 @@
         "description": "Point to a running `licli serve` instance.",
         "data": {
           "host": "Server address",
-          "token": "***)"
+          "token": "Token"
         }
       },
       "local": {
@@ -59,7 +105,7 @@
         "description": "Update the HTTP server address and token.",
         "data": {
           "host": "Server address",
-          "token": "***)"
+          "token": "Token"
         }
       }
     },
