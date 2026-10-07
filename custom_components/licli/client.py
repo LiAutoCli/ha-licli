@@ -111,6 +111,18 @@ class LicliClient:
             data = await self._cli_request(["status", vin])
         return data.get("location")
 
+    async def tire(self, vin: str) -> dict[str, Any]:
+        """Get tyre pressures/temperatures (requires liauto>=0.1.1b3).
+
+        CLI: `licli tire <vin> --json` -> {"tires": {...}}
+        HTTP: GET /vehicles/<vin>/tire
+        """
+        if self._mode == MODE_HTTP:
+            data = await self._http_request("GET", f"/vehicles/{vin}/tire")
+        else:
+            data = await self._cli_request(["tire", vin])
+        return data.get("tires") or {}
+
     async def control(self, vin: str, action: str, **kwargs: Any) -> dict[str, Any]:
         """Send control command."""
         body = {"action": action}

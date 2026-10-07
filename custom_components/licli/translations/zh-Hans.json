@@ -11,6 +11,10 @@
       "indoor_temp": {"name": "车内温度"},
       "outdoor_temp": {"name": "车外温度"},
       "air_quality": {"name": "空气质量"},
+      "tire_fl_pressure": {"name": "前左胎压"},
+      "tire_fr_pressure": {"name": "前右胎压"},
+      "tire_rl_pressure": {"name": "后左胎压"},
+      "tire_rr_pressure": {"name": "后右胎压"},
       "charging_status": {
         "name": "充电状态",
         "state": {

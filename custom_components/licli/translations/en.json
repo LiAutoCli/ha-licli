@@ -11,6 +11,10 @@
       "indoor_temp": {"name": "Indoor temperature"},
       "outdoor_temp": {"name": "Outdoor temperature"},
       "air_quality": {"name": "Air quality"},
+      "tire_fl_pressure": {"name": "Tire pressure FL"},
+      "tire_fr_pressure": {"name": "Tire pressure FR"},
+      "tire_rl_pressure": {"name": "Tire pressure RL"},
+      "tire_rr_pressure": {"name": "Tire pressure RR"},
       "charging_status": {
         "name": "Charging status",
         "state": {

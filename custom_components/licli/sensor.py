@@ -10,7 +10,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, UnitOfLength, UnitOfTemperature
+from homeassistant.const import PERCENTAGE, UnitOfLength, UnitOfPressure, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -20,6 +20,7 @@ from .const import (
     COORDINATOR,
     DOMAIN,
     SENSOR_SPECS,
+    TIRE_SPECS,
     entity_id_for,
     unique_id_for,
 )
@@ -61,6 +62,8 @@ async def async_setup_entry(
         nickname = vehicle.get("vehicleInfo", {}).get("vehicleNickname", vin)
         for spec in SENSOR_SPECS:
             entities.append(LicliSensor(coordinator, vin, nickname, spec))
+        for spec in TIRE_SPECS:
+            entities.append(LicliTireSensor(coordinator, vin, nickname, spec))
     async_add_entities(entities)
 
 
@@ -103,23 +106,60 @@ class LicliSensor(CoordinatorEntity[LicliDataUpdateCoordinator], SensorEntity):
             self._attr_options = spec["options"]
 
     @property
-    def native_value(self) -> Any:
-        """Return the state."""
-        status = self.coordinator.data.get(self._vin, {}).get("status", {})
-        if self._compute == "endurance":
-            electric = status.get("electricRange")
-            fuel = status.get("fuelRange")
-            if electric is None and fuel is None:
-                return None
-            return (electric or 0) + (fuel or 0)
-        value = status.get(self._field)
-        if self._is_enum:
-            if value is None:
-                return None
-            return value if value in (self._attr_options or []) else "unknown"
-        return value
-
-    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return extra attributes."""
         return {ATTR_VIN: self._vin}
+
+
+class LicliTireSensor(CoordinatorEntity[LicliDataUpdateCoordinator], SensorEntity):
+    """Tyre-pressure sensor (option B).
+
+    State = pressure (kPa). Tyre temperature and warning flags are exposed as
+    extra attributes, keeping the entity count low.
+    """
+
+    def __init__(
+        self,
+        coordinator: LicliDataUpdateCoordinator,
+        vin: str,
+        nickname: str,
+        spec: dict[str, Any],
+    ) -> None:
+        """Initialize the tyre sensor."""
+        super().__init__(coordinator)
+        self._vin = vin
+        self._pos = spec["pos"]
+        self._slug = spec["slug"]
+        self.entity_id = entity_id_for("sensor", vin, self._slug)
+        self._attr_unique_id = unique_id_for(vin, self._slug)
+        self._attr_translation_key = self._slug
+        self._attr_has_entity_name = True
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, vin)},
+            "name": nickname,
+            "manufacturer": "Li Auto",
+        }
+        self._attr_device_class = SensorDeviceClass.PRESSURE
+        self._attr_native_unit_of_measurement = UnitOfPressure.KPA
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    def _tire(self) -> dict[str, Any]:
+        """Return this wheel's raw dict."""
+        tires = self.coordinator.data.get(self._vin, {}).get("tire") or {}
+        return tires.get(self._pos) or {}
+
+    @property
+    def native_value(self) -> Any:
+        """Return the tyre pressure."""
+        return self._tire().get("pressure")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Tyre temperature + warning flags ride along as attributes."""
+        t = self._tire()
+        return {
+            ATTR_VIN: self._vin,
+            "temperature": t.get("temp"),
+            "pressure_warning": t.get("pressureWarning"),
+            "temperature_warning": t.get("tempWarning"),
+        }

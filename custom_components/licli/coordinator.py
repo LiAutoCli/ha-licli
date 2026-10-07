@@ -47,10 +47,16 @@ class LicliDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
             try:
                 status = await self.client.status(vin)
                 location = await self.client.location(vin)
+                try:
+                    tire = await self.client.tire(vin)
+                except LicliError as err:
+                    _LOGGER.warning("Failed to fetch tire for %s: %s", vin, err)
+                    tire = {}
                 data[vin] = {
                     "vehicle": v,
                     "status": status,
                     "location": location,
+                    "tire": tire,
                 }
             except LicliError as err:
                 _LOGGER.warning("Failed to fetch status for %s: %s", vin, err)
@@ -58,6 +64,7 @@ class LicliDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
                     "vehicle": v,
                     "status": {},
                     "location": None,
+                    "tire": {},
                 }
 
         return data

@@ -82,6 +82,16 @@ ONLINE_SPECS: tuple[dict, ...] = (
     {"field": "online", "slug": "online", "device_class": "connectivity"},
 )
 
+# Tire-pressure sensors (option B). Each position is a sensor whose state is
+# the pressure (kPa); tyre temperature + warning flags ride along as attributes.
+# Source: `licli tire <vin> --json` -> data["tires"][pos] = {pressure,temp,...}
+TIRE_SPECS: tuple[dict, ...] = (
+    {"pos": "frontLeft", "slug": "tire_fl_pressure"},
+    {"pos": "frontRight", "slug": "tire_fr_pressure"},
+    {"pos": "rearLeft", "slug": "tire_rl_pressure"},
+    {"pos": "rearRight", "slug": "tire_rr_pressure"},
+)
+
 # Buttons.
 BUTTON_SPECS: tuple[dict, ...] = (
     {"action": "find", "slug": "find"},

@@ -11,6 +11,10 @@
       "indoor_temp": {"name": "Температура в салоне"},
       "outdoor_temp": {"name": "Температура снаружи"},
       "air_quality": {"name": "Качество воздуха"},
+      "tire_fl_pressure": {"name": "Давление шины (передняя левая)"},
+      "tire_fr_pressure": {"name": "Давление шины (передняя правая)"},
+      "tire_rl_pressure": {"name": "Давление шины (задняя левая)"},
+      "tire_rr_pressure": {"name": "Давление шины (задняя правая)"},
       "charging_status": {
         "name": "Состояние зарядки",
         "state": {
