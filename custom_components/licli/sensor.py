@@ -106,6 +106,23 @@ class LicliSensor(CoordinatorEntity[LicliDataUpdateCoordinator], SensorEntity):
             self._attr_options = spec["options"]
 
     @property
+    def native_value(self) -> Any:
+        """Return the state."""
+        status = self.coordinator.data.get(self._vin, {}).get("status", {})
+        if self._compute == "endurance":
+            electric = status.get("electricRange")
+            fuel = status.get("fuelRange")
+            if electric is None and fuel is None:
+                return None
+            return (electric or 0) + (fuel or 0)
+        value = status.get(self._field)
+        if self._is_enum:
+            if value is None:
+                return None
+            return value if value in (self._attr_options or []) else "unknown"
+        return value
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return extra attributes."""
         return {ATTR_VIN: self._vin}
