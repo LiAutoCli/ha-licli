@@ -44,6 +44,13 @@ DEFAULT_DRIVE_FREQUENT = True
 DRIVE_INTERVAL = 60  # seconds
 MOVING_GEARS = frozenset({"R", "N", "D"})
 
+# Control actions that require `-yes` in non-interactive mode (CLI force-confirms
+# them). Per the liauto CLI reference only unlock and trunk are confirm-required;
+# everything else (lock/find/wake/ac/seat-vent/seat-heat/wheel-heat/window/result)
+# must NOT receive -yes. New actions: probe real syntax first, then add here if
+# the CLI reports "confirmation required in non-interactive mode (use -yes)".
+CONFIRM_ACTIONS = frozenset({"unlock", "trunk"})
+
 # Parking photos (requires liauto>=0.1.2b0).
 #   `licli photos <vin> --json` -> {"photos": [{"name","url"}], "picTime", ...}
 # After the vehicle transitions to all-doors-locked, re-pull photos once per

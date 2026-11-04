@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_MODE, CONF_HOST, CONF_TOKEN, CONF_ACTIVATION_CODE
-from .const import MODE_HTTP, MODE_LOCAL
+from .const import MODE_HTTP, MODE_LOCAL, CONFIRM_ACTIONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -123,8 +123,36 @@ class LicliClient:
         stdout, stderr = await proc.communicate()
 
         if proc.returncode != 0:
-            _LOGGER.error("licli stderr: %s", stderr.decode())
-            raise LicliError(f"licli exited {proc.returncode}")
+            # The licli CLI prints a structured error envelope to **stdout**
+            # (even on failure) and leaves stderr empty, e.g.
+            #   {"ok":false,"error":{"code":"command_failed","message":"...","retryable":false}}
+            # Older code only logged stderr, so every failure looked like a
+            # bare "licli exited 1" with no reason. Surface stdout JSON too.
+            out = stdout.decode().strip()
+            payload: dict[str, Any] = {}
+            if out:
+                try:
+                    payload = json.loads(out)
+                except json.JSONDecodeError:
+                    payload = {}
+            err = payload.get("error") or {}
+            code = err.get("code")
+            message = err.get("message")
+            retryable = err.get("retryable")
+            detail = message or out or stderr.decode().strip() or "(no output)"
+            _LOGGER.error(
+                "licli %s failed (exit %s): code=%s retryable=%s: %s",
+                " ".join(args),
+                proc.returncode,
+                code,
+                retryable,
+                detail,
+            )
+            raise LicliError(
+                f"licli exited {proc.returncode}: {detail}",
+                code=code,
+                retryable=retryable,
+            )
 
         out = stdout.decode().strip()
         try:
@@ -197,9 +225,12 @@ class LicliClient:
                 "POST", f"/vehicles/{vin}/control", body
             )
         else:
-            # Map HA action names to CLI subcommands. -yes must come right
-            # after "control" for actions that require confirmation (trunk).
-            needs_yes = action == "trunk"
+            # In non-interactive mode licli forces confirmation for some
+            # actions (unlock, trunk); they need `-yes` or they exit 1 with
+            # "confirmation required in non-interactive mode (use -yes)".
+            # Other actions must NOT get -yes. `-yes` is a control-level flag
+            # and must sit right after "control".
+            needs_yes = action in CONFIRM_ACTIONS
             action_map = {
                 "lock": ["lock"],
                 "unlock": ["unlock"],
@@ -224,6 +255,17 @@ class LicliClient:
 
 class LicliError(Exception):
     """LiAuto CLI error."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str | None = None,
+        retryable: bool | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.retryable = retryable
 
 
 async def async_activate(hass: HomeAssistant, code: str) -> dict[str, Any]:
