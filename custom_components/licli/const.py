@@ -9,12 +9,40 @@ CONF_HOST = "host"
 CONF_TOKEN = "token"
 CONF_ACTIVATION_CODE = "activation_code"
 CONF_SCAN_INTERVAL = "scan_interval"
+CONF_SCAN_PROFILE = "scan_profile"
+CONF_DRIVE_FREQUENT = "drive_frequent"
 
 MODE_HTTP = "http"
 MODE_LOCAL = "local"
 
-DEFAULT_SCAN_INTERVAL = 60
+# Polling interval is configured as a "profile" = a multiplier of a base
+# interval. "normal" is 1x = 4 minutes; the others scale from that base.
+DEFAULT_SCAN_INTERVAL = 600  # legacy raw-seconds fallback (unused by default)
+DEFAULT_SCAN_PROFILE = "normal"
+SCAN_BASE_INTERVAL = 240  # seconds; normal (1x) = 4 min
+SCAN_PROFILES: dict[str, float] = {
+    "frequent": 0.25,
+    "fast": 0.5,
+    "normal": 1.0,
+    "slow": 2.0,
+    "slowest": 4.0,
+}
 DEFAULT_HTTP_PORT = 18001
+
+
+def scan_interval_seconds(profile: str | None) -> int:
+    """Return the poll interval (seconds) for a scan profile key."""
+    factor = SCAN_PROFILES.get(
+        profile or DEFAULT_SCAN_PROFILE, SCAN_PROFILES[DEFAULT_SCAN_PROFILE]
+    )
+    return int(round(SCAN_BASE_INTERVAL * factor))
+
+
+# "Frequent while driving": when enabled, poll every DRIVE_INTERVAL seconds
+# whenever any vehicle's gear is not P (i.e. R/N/D); otherwise use the profile.
+DEFAULT_DRIVE_FREQUENT = True
+DRIVE_INTERVAL = 60  # seconds
+MOVING_GEARS = frozenset({"R", "N", "D"})
 
 COORDINATOR = "coordinator"
 CLIENT = "client"
@@ -23,6 +51,7 @@ ATTR_VIN = "vin"
 ATTR_MODEL = "model"
 ATTR_PLATE = "plate"
 ATTR_NICKNAME = "nickname"
+ATTR_PIC_TIME = "pic_time"
 
 
 # --- Entity naming (mechanism B) -------------------------------------------
@@ -55,6 +84,7 @@ SENSOR_SPECS: tuple[dict, ...] = (
     {"compute": "endurance", "slug": "endurance", "device_class": "distance", "unit": "km", "state_class": "measurement"},
     {"field": "totalMileage", "slug": "mileage", "device_class": "distance", "unit": "km", "state_class": "total_increasing"},
     {"field": "adMileage", "slug": "ad_mileage", "device_class": "distance", "unit": "km", "state_class": "total_increasing"},
+    {"field": "gear", "slug": "gear", "device_class": "enum", "unit": None, "state_class": None, "options": ["P", "R", "N", "D", "unknown"]},
     {"field": "indoorTemp", "slug": "indoor_temp", "device_class": "temperature", "unit": "°C", "state_class": "measurement"},
     {"field": "outdoorTemp", "slug": "outdoor_temp", "device_class": "temperature", "unit": "°C", "state_class": "measurement"},
     {"field": "airQuality", "slug": "air_quality", "device_class": None, "unit": None, "state_class": "measurement"},
@@ -90,6 +120,14 @@ TIRE_SPECS: tuple[dict, ...] = (
     {"pos": "frontRight", "slug": "tire_fr_pressure"},
     {"pos": "rearLeft", "slug": "tire_rl_pressure"},
     {"pos": "rearRight", "slug": "tire_rr_pressure"},
+)
+
+# Parking image entities. `top` = the single top view, `surround` = the four
+# single-camera views (front/rear/left/right) merged into one 2x2 image.
+# Source: `licli photos <vin> --json`.
+IMAGE_SPECS: tuple[dict, ...] = (
+    {"kind": "top", "slug": "parking_top"},
+    {"kind": "surround", "slug": "parking_surround"},
 )
 
 # Buttons.

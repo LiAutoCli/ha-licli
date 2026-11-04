@@ -7,7 +7,18 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+from homeassistant.core import callback
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .const import (
     DOMAIN,
@@ -15,6 +26,11 @@ from .const import (
     CONF_HOST,
     CONF_TOKEN,
     CONF_ACTIVATION_CODE,
+    CONF_SCAN_PROFILE,
+    CONF_DRIVE_FREQUENT,
+    DEFAULT_SCAN_PROFILE,
+    DEFAULT_DRIVE_FREQUENT,
+    SCAN_PROFILES,
     MODE_HTTP,
     MODE_LOCAL,
     DEFAULT_HTTP_PORT,
@@ -32,6 +48,7 @@ STEP_LOCAL_REAUTH = "local_reauth"
 STEP_LOCAL_TOKEN = "local_token"
 STEP_RECONFIGURE_LOCAL = "reconfigure_local"
 STEP_RECONFIGURE_HTTP = "reconfigure_http"
+STEP_OPTIONS_INIT = "init"
 
 
 class LicliConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -331,4 +348,45 @@ class LicliConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> LicliOptionsFlow:
+        """Return the options flow handler."""
+        return LicliOptionsFlow()
+
+
+class LicliOptionsFlow(OptionsFlow):
+    """Options flow: tweak runtime settings without deleting the entry."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the integration options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        current = self.config_entry.options.get(
+            CONF_SCAN_PROFILE, DEFAULT_SCAN_PROFILE
+        )
+        current_drive = self.config_entry.options.get(
+            CONF_DRIVE_FREQUENT, DEFAULT_DRIVE_FREQUENT
+        )
+        return self.async_show_form(
+            step_id=STEP_OPTIONS_INIT,
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_SCAN_PROFILE, default=current): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(SCAN_PROFILES),
+                            translation_key=CONF_SCAN_PROFILE,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                    vol.Required(
+                        CONF_DRIVE_FREQUENT, default=current_drive
+                    ): bool,
+                }
+            ),
         )
