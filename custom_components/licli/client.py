@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 import json
 import logging
 import os
@@ -11,11 +12,56 @@ from typing import Any
 
 import aiohttp
 from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
 
 from .const import CONF_MODE, CONF_HOST, CONF_TOKEN, CONF_ACTIVATION_CODE
 from .const import MODE_HTTP, MODE_LOCAL
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _pic_time_to_ms(value: Any) -> int | None:
+    """Convert a ``picTime`` value to epoch milliseconds.
+
+    Two shapes are seen in the wild:
+
+    * ``"2026-10-10T02:45:09Z"`` - ISO 8601 with a UTC offset (M platform)
+    * ``"2026-10-10 08:53:25"`` - naive local wall clock, no offset (X platform)
+
+    Naive values are interpreted in Home Assistant's local timezone.
+    """
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    if not isinstance(value, str):
+        return None
+
+    text = value.strip()
+    parsed = dt_util.parse_datetime(text)
+    if parsed is None:
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+            try:
+                parsed = datetime.strptime(text, fmt)
+                break
+            except ValueError:
+                continue
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    return int(parsed.timestamp() * 1000)
+
+
+def _timestamp_ms(data: dict[str, Any]) -> int | None:
+    """Return the photo capture time in epoch milliseconds.
+
+    Prefers the numeric ``timestamp`` field and falls back to ``picTime``
+    only (``picTimestamp`` is intentionally ignored).
+    """
+    if (timestamp := data.get("timestamp")) is not None:
+        return timestamp
+    return _pic_time_to_ms(data.get("picTime"))
 
 
 class LicliClient:
@@ -122,6 +168,24 @@ class LicliClient:
         else:
             data = await self._cli_request(["tire", vin])
         return data.get("tires") or {}
+
+    async def photos(self, vin: str) -> dict[str, Any]:
+        """Get parking photos (requires liauto>=0.1.2b0).
+
+        CLI: `licli photos <vin> --json` -> {"photos": [{"name","url"}], ...}
+        Returns the whole payload (photos + timestamp) keyed under "photos"
+        and "timestamp" by the caller. We keep the raw payload so the entity
+        can read both the photo list and the capture time.
+        """
+        if self._mode == MODE_HTTP:
+            data = await self._http_request("GET", f"/vehicles/{vin}/photos")
+        else:
+            data = await self._cli_request(["photos", vin])
+        return {
+            "photos": data.get("photos") or [],
+            "timestamp": _timestamp_ms(data),
+            "pic_time": data.get("picTime"),
+        }
 
     async def control(self, vin: str, action: str, **kwargs: Any) -> dict[str, Any]:
         """Send control command."""

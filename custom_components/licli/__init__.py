@@ -22,6 +22,7 @@ PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
     Platform.BUTTON,
     Platform.BINARY_SENSOR,
+    Platform.IMAGE,
 ]
 
 

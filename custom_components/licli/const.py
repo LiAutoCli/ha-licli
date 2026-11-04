@@ -44,6 +44,18 @@ DEFAULT_DRIVE_FREQUENT = True
 DRIVE_INTERVAL = 60  # seconds
 MOVING_GEARS = frozenset({"R", "N", "D"})
 
+# Parking photos (requires liauto>=0.1.2b0).
+#   `licli photos <vin> --json` -> {"photos": [{"name","url"}], "picTime", ...}
+# After the vehicle transitions to all-doors-locked, re-pull photos once per
+# delay, so the parking shots are captured after the car has settled.
+PHOTOS_SNAPSHOT_DELAYS = (30, 60)
+
+# Photo names as returned by `licli photos`.
+PHOTO_TOP = "picInTop"
+# Grid order (left→right, top→bottom): front / rear / right / left.
+PHOTO_QUAD = ("picInFront", "picInRear", "picInRight", "picInLeft")
+IMAGE_CONTENT_TYPE = "image/jpeg"
+
 COORDINATOR = "coordinator"
 CLIENT = "client"
 

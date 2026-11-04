@@ -6,6 +6,6 @@
   "dependencies": [],
   "documentation": "https://github.com/licli/licli",
   "iot_class": "cloud_polling",
-  "requirements": ["aiohttp>=3.9", "liauto>=0.1.1b3"],
+  "requirements": ["aiohttp>=3.9", "liauto>=0.1.2b1"],
   "version": "0.1.0"
 }

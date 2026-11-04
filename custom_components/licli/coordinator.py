@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -18,6 +20,7 @@ from .const import (
     DEFAULT_DRIVE_FREQUENT,
     DRIVE_INTERVAL,
     MOVING_GEARS,
+    PHOTOS_SNAPSHOT_DELAYS,
     scan_interval_seconds,
 )
 from .client import LicliClient, LicliError
@@ -36,6 +39,8 @@ class LicliDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
     ) -> None:
         """Initialize coordinator."""
         self.client = client
+        self._photo_snapshot_unsubs: dict[str, list[CALLBACK_TYPE]] = {}
+        self._prev_all_locked: dict[str, bool] = {}
         # Base poll interval from the scan "profile" (a multiplier of the base
         # interval); fall back to a legacy raw-seconds option if present.
         profile = entry.options.get(CONF_SCAN_PROFILE)
@@ -74,28 +79,28 @@ class LicliDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
         data: dict[str, dict] = {}
         for v in vehicles:
             vin = v["vin"]
+            entry_data: dict = {
+                "vehicle": v,
+                "status": {},
+                "location": None,
+                "tire": {},
+                "photos": {},
+            }
             try:
-                status = await self.client.status(vin)
-                location = await self.client.location(vin)
-                try:
-                    tire = await self.client.tire(vin)
-                except LicliError as err:
-                    _LOGGER.warning("Failed to fetch tire for %s: %s", vin, err)
-                    tire = {}
-                data[vin] = {
-                    "vehicle": v,
-                    "status": status,
-                    "location": location,
-                    "tire": tire,
-                }
+                entry_data["status"] = await self.client.status(vin)
+                entry_data["location"] = await self.client.location(vin)
             except LicliError as err:
                 _LOGGER.warning("Failed to fetch status for %s: %s", vin, err)
-                data[vin] = {
-                    "vehicle": v,
-                    "status": {},
-                    "location": None,
-                    "tire": {},
-                }
+            try:
+                entry_data["tire"] = await self.client.tire(vin)
+            except LicliError as err:
+                _LOGGER.warning("Failed to fetch tire for %s: %s", vin, err)
+            try:
+                entry_data["photos"] = await self.client.photos(vin)
+            except LicliError as err:
+                _LOGGER.warning("Failed to fetch photos for %s: %s", vin, err)
+            data[vin] = entry_data
+            self._async_track_lock_state(vin, entry_data["status"])
 
         self._async_apply_drive_interval(data)
         return data
@@ -126,3 +131,75 @@ class LicliDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict]]):
                 desired,
                 self._drive_frequent,
             )
+
+    # -- post-lock photo snapshot -----------------------------------------
+
+    @staticmethod
+    def _all_doors_locked(status: dict[str, Any]) -> bool | None:
+        """Return True if every door reports locked; None if unknown."""
+        doors = status.get("doors") if isinstance(status, dict) else None
+        if not doors:
+            return None
+        return all(bool(d.get("locked")) for d in doors.values())
+
+    @callback
+    def _async_track_lock_state(self, vin: str, status: dict[str, Any]) -> None:
+        """Schedule photo snapshots when the vehicle becomes all-doors-locked.
+
+        Triggers on the transition into the all-locked state (rather than on the
+        HA lock command), so externally-initiated locks are covered too. The
+        first observation only seeds the state and never fires.
+        """
+        now_locked = self._all_doors_locked(status)
+        if now_locked is None:  # unknown (e.g. status fetch failed): keep last
+            return
+        prev = self._prev_all_locked.get(vin)
+        self._prev_all_locked[vin] = now_locked
+        if prev is False and now_locked:
+            self.async_schedule_photo_snapshots(vin)
+
+    @callback
+    def async_schedule_photo_snapshots(self, vin: str) -> None:
+        """Re-pull this vehicle's photos at each PHOTOS_SNAPSHOT_DELAYS offset.
+
+        Called once the car has become all-doors-locked, so the parking shots
+        settle before being captured. Re-scheduling cancels any pending
+        snapshots for the same vehicle.
+        """
+        self._cancel_photo_snapshots(vin)
+        for delay in PHOTOS_SNAPSHOT_DELAYS:
+            self._photo_snapshot_unsubs.setdefault(vin, []).append(
+                async_call_later(self.hass, delay, self._make_snapshot(vin))
+            )
+
+    def _make_snapshot(self, vin: str):
+        """Build the one-shot callback for a single photo snapshot."""
+        async def _snapshot(_now) -> None:
+            await self._async_photo_snapshot(vin)
+
+        return _snapshot
+
+    @callback
+    def _cancel_photo_snapshots(self, vin: str) -> None:
+        """Cancel any pending photo snapshots for one vehicle."""
+        for unsub in self._photo_snapshot_unsubs.pop(vin, []):
+            unsub()
+
+    async def _async_photo_snapshot(self, vin: str) -> None:
+        """Fetch photos for one vehicle and notify listeners."""
+        try:
+            photos = await self.client.photos(vin)
+        except LicliError as err:
+            _LOGGER.warning("Post-lock photo snapshot failed for %s: %s", vin, err)
+            return
+        if vin in self.data:
+            self.data[vin]["photos"] = photos
+            self.async_update_listeners()
+
+    async def async_shutdown(self) -> None:
+        """Cancel pending snapshots and shut the coordinator down."""
+        for unsubs in self._photo_snapshot_unsubs.values():
+            for unsub in unsubs:
+                unsub()
+        self._photo_snapshot_unsubs.clear()
+        await super().async_shutdown()
