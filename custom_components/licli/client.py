@@ -64,6 +64,23 @@ def _timestamp_ms(data: dict[str, Any]) -> int | None:
     return _pic_time_to_ms(data.get("picTime"))
 
 
+# Upstream sometimes uses INT32_MIN as a "no value" sentinel for numeric fields.
+_SENTINEL = -2147483648
+
+
+def _normalize(value: Any) -> Any:
+    """Replace the upstream INT32_MIN sentinel with None, recursively."""
+    if isinstance(value, dict):
+        return {key: _normalize(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_normalize(item) for item in value]
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and value == _SENTINEL:
+        return None
+    return value
+
+
 class LicliClient:
     """Client for LiAuto CLI."""
 
@@ -105,7 +122,7 @@ class LicliClient:
                 if not data.get("ok"):
                     error = data.get("error", {})
                     raise LicliError(error.get("message", "Unknown error"))
-                return data
+                return _normalize(data)
 
     async def _cli_request(self, args: list[str]) -> dict[str, Any]:
         """Run liauto CLI via `python -m liauto` (installed as HA requirement)."""
@@ -156,7 +173,7 @@ class LicliClient:
 
         out = stdout.decode().strip()
         try:
-            return json.loads(out)
+            return _normalize(json.loads(out))
         except json.JSONDecodeError:
             # Some control commands print human text (e.g. "trunk open sent (operationId: ...)")
             return {"ok": True, "raw": out}
