@@ -12,16 +12,11 @@ Home Assistant custom integration for LiAuto (理想汽车) vehicles via [licli]
 
 ## Installation
 
-### HACS (推荐)
-
-1. HACS → 自定义存储库 → 添加 `https://github.com/licli/licli`
-2. 下载并重启 Home Assistant
-
 ### 手动安装
 
 ```bash
 cd config/custom_components
-git clone https://github.com/licli/licli.git licli
+unzip licli.zip
 ```
 
 重启 Home Assistant。
