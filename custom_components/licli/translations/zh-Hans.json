@@ -2,19 +2,48 @@
   "title": "LiAuto CLI",
   "entity": {
     "sensor": {
-      "battery": {"name": "电量"},
-      "batt_endurance": {"name": "纯电续航"},
-      "fuel_endurance": {"name": "燃油续航"},
-      "endurance": {"name": "总续航"},
-      "mileage": {"name": "总里程"},
-      "ad_mileage": {"name": "辅助驾驶里程"},
-      "indoor_temp": {"name": "车内温度"},
-      "outdoor_temp": {"name": "车外温度"},
-      "air_quality": {"name": "空气质量"},
-      "tire_fl_pressure": {"name": "前左胎压"},
-      "tire_fr_pressure": {"name": "前右胎压"},
-      "tire_rl_pressure": {"name": "后左胎压"},
-      "tire_rr_pressure": {"name": "后右胎压"},
+      "battery": {
+        "name": "电量"
+      },
+      "batt_endurance": {
+        "name": "纯电续航"
+      },
+      "fuel_endurance": {
+        "name": "燃油续航"
+      },
+      "endurance": {
+        "name": "总续航"
+      },
+      "mileage": {
+        "name": "总里程"
+      },
+      "ad_mileage": {
+        "name": "智驾里程"
+      },
+      "gear": {
+        "name": "档位"
+      },
+      "indoor_temp": {
+        "name": "车内温度"
+      },
+      "outdoor_temp": {
+        "name": "车外温度"
+      },
+      "air_quality": {
+        "name": "空气质量"
+      },
+      "tire_fl_pressure": {
+        "name": "胎压前左"
+      },
+      "tire_fr_pressure": {
+        "name": "胎压前右"
+      },
+      "tire_rl_pressure": {
+        "name": "胎压后左"
+      },
+      "tire_rr_pressure": {
+        "name": "胎压后右"
+      },
       "charging_status": {
         "name": "充电状态",
         "state": {
@@ -28,26 +57,58 @@
       }
     },
     "binary_sensor": {
-      "online": {"name": "在线"},
-      "door_driver": {"name": "主驾车门"},
-      "door_passenger": {"name": "副驾车门"},
-      "door_rear_left": {"name": "左后车门"},
-      "door_rear_right": {"name": "右后车门"},
-      "door_trunk": {"name": "尾门"}
+      "online": {
+        "name": "在线"
+      },
+      "door_driver": {
+        "name": "车门主驾"
+      },
+      "door_passenger": {
+        "name": "车门副驾"
+      },
+      "door_rear_left": {
+        "name": "车门左后"
+      },
+      "door_rear_right": {
+        "name": "车门右后"
+      },
+      "door_trunk": {
+        "name": "尾门"
+      }
     },
     "lock": {
-      "door": {"name": "门锁"}
+      "door": {
+        "name": "门锁"
+      }
     },
     "climate": {
-      "ac": {"name": "空调"}
+      "ac": {
+        "name": "空调"
+      }
     },
     "device_tracker": {
-      "location": {"name": "位置"}
+      "location": {
+        "name": "位置"
+      }
     },
     "button": {
-      "find": {"name": "寻车"},
-      "wake": {"name": "唤醒"},
-      "trunk": {"name": "尾门"}
+      "find": {
+        "name": "寻车"
+      },
+      "wake": {
+        "name": "唤醒"
+      },
+      "trunk": {
+        "name": "尾门"
+      }
+    },
+    "image": {
+      "parking_top": {
+        "name": "驻车俯视"
+      },
+      "parking_surround": {
+        "name": "驻车环视"
+      }
     }
   },
   "config": {
@@ -70,7 +131,7 @@
       },
       "local": {
         "title": "激活码",
-        "description": "licli 查询车辆状态和控制需要激活码（LICLI_CODE）。",
+        "description": "licli 查询车辆状态和控制需要激活码（LICLI_CODE）。\n\n可通过 https://t.me/liautocli 获取激活码。",
         "data": {
           "activation_code": "激活码"
         }
@@ -99,7 +160,7 @@
       },
       "reconfigure_local": {
         "title": "重新配置：激活码",
-        "description": "更新激活码，会基于现有凭据进行校验。",
+        "description": "更新激活码，会基于现有凭据进行校验。\n\n可通过 https://t.me/liautocli 获取激活码。",
         "data": {
           "activation_code": "激活码"
         }
@@ -125,6 +186,29 @@
     },
     "abort": {
       "reconfigure_successful": "重新配置成功"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "LiAuto CLI 选项",
+        "description": "选择车辆状态的刷新频率。间隔以「正常」4 分钟为基准按倍率换算。开启「行驶中频繁」后，车辆档位非 P 时每分钟刷新一次。",
+        "data": {
+          "scan_profile": "轮询频率",
+          "drive_frequent": "行驶中频繁刷新（档位非 P 时每分钟一次）"
+        }
+      }
+    },
+    "selector": {
+      "scan_profile": {
+        "options": {
+          "frequent": "频繁（0.25 倍，约 1 分钟）",
+          "fast": "较快（0.5 倍，2 分钟）",
+          "normal": "正常（1 倍，4 分钟）",
+          "slow": "较慢（2 倍，8 分钟）",
+          "slowest": "最慢（4 倍，16 分钟）"
+        }
+      }
     }
   }
 }

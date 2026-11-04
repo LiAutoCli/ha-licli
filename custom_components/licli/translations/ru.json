@@ -2,19 +2,48 @@
   "title": "LiAuto CLI",
   "entity": {
     "sensor": {
-      "battery": {"name": "Батарея"},
-      "batt_endurance": {"name": "Запас хода (электро)"},
-      "fuel_endurance": {"name": "Запас хода (топливо)"},
-      "endurance": {"name": "Общий запас хода"},
-      "mileage": {"name": "Одометр"},
-      "ad_mileage": {"name": "Пробег AD"},
-      "indoor_temp": {"name": "Температура в салоне"},
-      "outdoor_temp": {"name": "Температура снаружи"},
-      "air_quality": {"name": "Качество воздуха"},
-      "tire_fl_pressure": {"name": "Давление шины (передняя левая)"},
-      "tire_fr_pressure": {"name": "Давление шины (передняя правая)"},
-      "tire_rl_pressure": {"name": "Давление шины (задняя левая)"},
-      "tire_rr_pressure": {"name": "Давление шины (задняя правая)"},
+      "battery": {
+        "name": "Батарея"
+      },
+      "batt_endurance": {
+        "name": "Запас хода (электро)"
+      },
+      "fuel_endurance": {
+        "name": "Запас хода (топливо)"
+      },
+      "endurance": {
+        "name": "Общий запас хода"
+      },
+      "mileage": {
+        "name": "Одометр"
+      },
+      "ad_mileage": {
+        "name": "Пробег Smart Driving"
+      },
+      "gear": {
+        "name": "Передача"
+      },
+      "indoor_temp": {
+        "name": "Температура в салоне"
+      },
+      "outdoor_temp": {
+        "name": "Температура снаружи"
+      },
+      "air_quality": {
+        "name": "Качество воздуха"
+      },
+      "tire_fl_pressure": {
+        "name": "Давление шины (передняя левая)"
+      },
+      "tire_fr_pressure": {
+        "name": "Давление шины (передняя правая)"
+      },
+      "tire_rl_pressure": {
+        "name": "Давление шины (задняя левая)"
+      },
+      "tire_rr_pressure": {
+        "name": "Давление шины (задняя правая)"
+      },
       "charging_status": {
         "name": "Состояние зарядки",
         "state": {
@@ -28,26 +57,58 @@
       }
     },
     "binary_sensor": {
-      "online": {"name": "Онлайн"},
-      "door_driver": {"name": "Водительская дверь"},
-      "door_passenger": {"name": "Пассажирская дверь"},
-      "door_rear_left": {"name": "Задняя левая дверь"},
-      "door_rear_right": {"name": "Задняя правая дверь"},
-      "door_trunk": {"name": "Багажник"}
+      "online": {
+        "name": "Онлайн"
+      },
+      "door_driver": {
+        "name": "Водительская дверь"
+      },
+      "door_passenger": {
+        "name": "Пассажирская дверь"
+      },
+      "door_rear_left": {
+        "name": "Задняя левая дверь"
+      },
+      "door_rear_right": {
+        "name": "Задняя правая дверь"
+      },
+      "door_trunk": {
+        "name": "Багажник"
+      }
     },
     "lock": {
-      "door": {"name": "Дверной замок"}
+      "door": {
+        "name": "Дверной замок"
+      }
     },
     "climate": {
-      "ac": {"name": "Климат-контроль"}
+      "ac": {
+        "name": "Климат-контроль"
+      }
     },
     "device_tracker": {
-      "location": {"name": "Местоположение"}
+      "location": {
+        "name": "Местоположение"
+      }
     },
     "button": {
-      "find": {"name": "Найти авто"},
-      "wake": {"name": "Разбудить"},
-      "trunk": {"name": "Багажник"}
+      "find": {
+        "name": "Найти авто"
+      },
+      "wake": {
+        "name": "Разбудить"
+      },
+      "trunk": {
+        "name": "Багажник"
+      }
+    },
+    "image": {
+      "parking_top": {
+        "name": "Вид сверху (парковка)"
+      },
+      "parking_surround": {
+        "name": "Круговой обзор (парковка)"
+      }
     }
   },
   "config": {
@@ -70,7 +131,7 @@
       },
       "local": {
         "title": "Код активации",
-        "description": "licli требует код активации (LICLI_CODE) для статуса и управления автомобилем.",
+        "description": "licli требует код активации (LICLI_CODE) для статуса и управления автомобилем.\n\nПолучите код активации на https://t.me/liautocli.",
         "data": {
           "activation_code": "Код активации"
         }
@@ -99,7 +160,7 @@
       },
       "reconfigure_local": {
         "title": "Перенастройка: код активации",
-        "description": "Обновите код активации. Он проверяется по существующим учетным данным.",
+        "description": "Обновите код активации. Он проверяется по существующим учетным данным.\n\nПолучите код активации на https://t.me/liautocli.",
         "data": {
           "activation_code": "Код активации"
         }
@@ -125,6 +186,29 @@
     },
     "abort": {
       "reconfigure_successful": "Перенастройка выполнена"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Параметры LiAuto CLI",
+        "description": "Как часто обновлять состояние автомобиля. Интервалы кратны базовым 4 минутам (\"обычно\"). Если включено \"Чаще в движении\", опрос идёт раз в минуту, когда передача не P.",
+        "data": {
+          "scan_profile": "Частота опроса",
+          "drive_frequent": "Чаще в движении (раз в минуту, когда передача не P)"
+        }
+      }
+    },
+    "selector": {
+      "scan_profile": {
+        "options": {
+          "frequent": "Часто (0.25x, ~1 мин)",
+          "fast": "Быстро (0.5x, 2 мин)",
+          "normal": "Обычно (1x, 4 мин)",
+          "slow": "Медленно (2x, 8 мин)",
+          "slowest": "Очень медленно (4x, 16 мин)"
+        }
+      }
     }
   }
 }
