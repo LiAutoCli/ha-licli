@@ -97,7 +97,9 @@
       },
       "wake": {
         "name": "唤醒"
-      },
+      }
+    },
+    "switch": {
       "trunk": {
         "name": "尾门"
       }

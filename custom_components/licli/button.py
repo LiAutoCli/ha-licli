@@ -56,7 +56,6 @@ class LicliButton(CoordinatorEntity[LicliDataUpdateCoordinator], ButtonEntity):
         self._vin = vin
         self._action = spec["action"]
         self._slug = spec["slug"]
-        self._open_trunk = spec.get("open", False)
         self.entity_id = entity_id_for("button", vin, self._slug)
         self._attr_unique_id = unique_id_for(vin, self._slug)
         self._attr_translation_key = self._slug
@@ -74,7 +73,4 @@ class LicliButton(CoordinatorEntity[LicliDataUpdateCoordinator], ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle button press."""
-        kwargs: dict[str, Any] = {}
-        if self._action == "trunk":
-            kwargs["open"] = self._open_trunk
-        await self.coordinator.client.control(self._vin, self._action, **kwargs)
+        await self.coordinator.client.control(self._vin, self._action)

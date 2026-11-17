@@ -64,6 +64,7 @@ licli serve --addr 0.0.0.0:18001 --allow-control
 | `climate.*_空调` | 空调控制 |
 | `button.*_寻车` | 闪灯鸣笛 |
 | `button.*_唤醒` | 唤醒车辆 |
+| `switch.*_尾门` | 尾门开关（开/关） |
 | `binary_sensor.*_在线` | 在线状态 |
 | `binary_sensor.*_充电中` | 充电状态 |
 | `binary_sensor.*_主驾门` | 车门开关 |

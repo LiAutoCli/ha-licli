@@ -153,9 +153,9 @@ IMAGE_SPECS: tuple[dict, ...] = (
 BUTTON_SPECS: tuple[dict, ...] = (
     {"action": "find", "slug": "find"},
     {"action": "wake", "slug": "wake"},
-    {"action": "trunk", "slug": "trunk", "open": True},
 )
 
 LOCK_SLUG = "door"
+TRUNK_SLUG = "trunk"
 CLIMATE_SLUG = "ac"
 TRACKER_SLUG = "location"
