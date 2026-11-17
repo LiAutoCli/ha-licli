@@ -1,13 +1,13 @@
-# LiAuto CLI for Home Assistant
+# LiAuto integration for Home Assistant
 
 Home Assistant custom integration for LiAuto vehicles via [licli](https://pypi.org/project/liauto).
 
 ## Features
 
-- Two connection modes: HTTP API (`licli serve`) or local CLI (`uvx liauto`)
+- Two connection modes: Local CLI (`uvx liauto`) or HTTP API (`licli serve`)
 - Vehicle status: battery, range, mileage, air conditioning, door state
-- GPS tracking: live location
 - Remote control: door lock, air conditioning, find car, wake up
+- GPS tracking: live location
 - Multiple vehicles: every vehicle on the account is detected automatically
 
 ## Installation
@@ -25,9 +25,18 @@ Restart Home Assistant.
 
 Settings > Devices & Services > Add Integration > **LiAuto CLI**
 
-### Mode 1: HTTP (recommended)
+### Mode 1: Local CLI
 
-Requires a running `licli serve`:
+Configuration:
+
+- **Activation code**: `eyJ...` (your `LICLI_CODE`)
+
+- **Token JSON**: Find it in browser's F12 dev tools.
+  <img width="700" alt="licli json token" src="https://github.com/user-attachments/assets/67f6dd3c-5da0-4740-857f-65f3084ebf32" />
+
+### Mode 2: HTTP API
+
+Requires a running `licli serve` or [deploy using Docker](https://pypi.org/project/liauto/#user-content-docker-compose-deployment):
 
 ```bash
 export LICLI_CODE=<your activation code>
@@ -39,19 +48,10 @@ Configuration:
 - **Host**: `http://192.168.x.x:18001`
 - **Token**: optional, only if `licli serve` was started with `--token`
 
-### Mode 2: Local CLI
-
-Configuration:
-
-- **Activation code**: `eyJ...` (your `LICLI_CODE`)
-
-`uvx liauto` or `licli` must be available in the Home Assistant container or on the host.
 
 ## Activation code
 
-Running `licli` requires a valid activation code, bound to a VIN.
-
-Ask the licli publisher for one (`license-keygen --vin <VIN>`).
+Running `licli` requires a valid activation code, bound to a VIN. To get a code, message the Telegram bot [@licli_bot](https://t.me/licli_bot).
 
 ## Entities
 
